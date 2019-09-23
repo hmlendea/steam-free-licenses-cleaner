@@ -1,0 +1,1 @@
+# steam-free-licenses-cleaner
