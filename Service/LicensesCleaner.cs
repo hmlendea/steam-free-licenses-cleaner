@@ -11,19 +11,24 @@ namespace SteamFreeLicensesCleaner.Service
     {
         const string LicensesUrl = "https://store.steampowered.com/account/licenses/";
 
+        readonly ICookiesManager cookiesManager;
         readonly IWebProcessor webProcessor;
         readonly ILogger logger;
 
         public LicensesCleaner(
+            ICookiesManager cookiesManager,
             IWebProcessor webProcessor,
             ILogger logger)
         {
+            this.cookiesManager = cookiesManager;
             this.webProcessor = webProcessor;
             this.logger = logger;
         }
 
         public void CleanLicenses()
         {
+            cookiesManager.LoadCookies();
+
             logger.Info(MyOperation.LicensesCleaning, OperationStatus.Started);
 
             webProcessor.GoToUrl(LicensesUrl);
@@ -39,6 +44,8 @@ namespace SteamFreeLicensesCleaner.Service
             CleanDemoLicenses();
 
             logger.Debug(MyOperation.LicensesCleaning, OperationStatus.Success);
+
+            cookiesManager.SaveCookies();
         }
 
         private void CleanDemoLicenses()

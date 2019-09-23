@@ -107,7 +107,7 @@ namespace SteamFreeLicensesCleaner
                 .AddSingleton<ILogger, NuciLogger>()
                 .AddSingleton<IWebDriver>(s => webDriver)
                 .AddSingleton<IWebProcessor, WebProcessor>()
-                .AddSingleton<ICookieManager, CookieManager>()
+                .AddSingleton<ICookiesManager, CookiesManager>()
                 .AddSingleton<ILicensesCleaner, LicensesCleaner>()
                 .BuildServiceProvider();
         }

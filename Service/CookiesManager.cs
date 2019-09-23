@@ -15,7 +15,7 @@ using SteamFreeLicensesCleaner.Logging;
 
 namespace SteamFreeLicensesCleaner.Service
 {
-    public sealed class CookieManager : ICookieManager
+    public sealed class CookiesManager : ICookiesManager
     {
         const string HomePageUrl = "https://store.steampowered.com";
 
@@ -24,7 +24,7 @@ namespace SteamFreeLicensesCleaner.Service
         readonly CacheSettings cacheSettings;
         readonly ILogger logger;
 
-        public CookieManager(
+        public CookiesManager(
             IWebProcessor webProcessor,
             IWebDriver webDriver,
             CacheSettings cacheSettings,

@@ -1,6 +1,6 @@
 namespace SteamFreeLicensesCleaner.Service
 {
-    public interface ICookieManager
+    public interface ICookiesManager
     {
         void LoadCookies();
 
