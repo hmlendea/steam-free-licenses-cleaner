@@ -51,6 +51,23 @@ namespace SteamFreeLicensesCleaner.Service
         private void CleanDemoLicenses()
         {
             logger.Info(MyOperation.LicensesCleaning, OperationStatus.InProgress, "Cleaning the demo licenses");
+
+            int rowIndex = 0;
+            
+            while (true)
+            {
+                string rowXpath = $"//*[@id='main_content']/div/div/div/div/table/tbody/tr[{rowIndex + 2}]";
+                By rowSelector = By.XPath($"{rowXpath}/td[2]");
+
+                if (!webProcessor.DoesElementExist(rowSelector))
+                {
+                    break;
+                }
+
+                string productName = webProcessor.GetText(rowSelector);
+
+                rowIndex += 1; 
+            }
         }
     }    
 }
