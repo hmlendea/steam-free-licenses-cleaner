@@ -10,10 +10,6 @@ namespace SteamFreeLicensesCleaner.Logging
             
         }
 
-        public static LogInfoKey Username => new MyLogInfoKey(nameof(Username));
-
-        public static LogInfoKey KeyCode => new MyLogInfoKey(nameof(KeyCode));
-
-        public static LogInfoKey KeyStatus => new MyLogInfoKey(nameof(KeyStatus));
+        public static LogInfoKey ProductName => new MyLogInfoKey(nameof(ProductName));
     }
 }
