@@ -68,7 +68,7 @@ namespace SteamFreeLicensesCleaner.Service
 
         void RemoveLicenses()
         {
-            int rowIndex = 115;
+            int rowIndex = 145;
 
             while (true)
             {
@@ -88,12 +88,7 @@ namespace SteamFreeLicensesCleaner.Service
                 if (webProcessor.DoesElementExist(removalLinkSelector) &&
                     patternsToRemove.Any(pattern => Regex.IsMatch(productName, pattern)))
                 {
-                    string packageId = webProcessor
-                        .GetHyperlink(removalLinkSelector)
-                        .Split('(')[1]
-                        .Split(',')[0];
-                    
-                    RemoveLicense(packageId);
+                    RemoveLicense(rowIndex);
                     
                     logger.Debug(
                         MyOperation.LicensesCleaning,
@@ -105,49 +100,15 @@ namespace SteamFreeLicensesCleaner.Service
             }
         }
         
-        void RemoveLicense(string packageId)
+        void RemoveLicense(int rowIndex)
         {
-            string sessionId = GetCookieValue("sessionid");
-            string cookiesHeaderValue =
-                $"browserid={GetCookieValue("browserid")}; " +
-                $"sessionid={sessionId}; " +
-                $"timezoneOffset={GetCookieValue("timezoneOffset")}; " +
-                //steamMachineAuth
-                $"birthtime={GetCookieValue("birthtime")}; " +
-                $"lastagecheckage={GetCookieValue("lastagecheckage")}; " +
-                $"_ga={GetCookieValue("_ga")}; " +
-                $"dp_user_language={GetCookieValue("dp_user_language")}; " +
-                $"dp_user_sessionid={GetCookieValue("dp_user_sessionid")}; " +
-                $"steamRememberLogin={GetCookieValue("steamRememberLogin")}; " +
-                $"beta={GetCookieValue("beta")}; " +
-                $"recentapps={GetCookieValue("recentapps")}; " +
-                $"steamLoginSecure={GetCookieValue("steamLoginSecure")}; " +
-                $"Steam_Language={GetCookieValue("Steam_Language")}; " +
-                $"app_impressions={GetCookieValue("app_impressions")}; " +
-                $"steamCountry={GetCookieValue("steamCountry")}";
+            string rowXpath = $"//*[@id='main_content']/div/div/div/div/table/tbody/tr[{rowIndex + 2}]";
+            By rowSelector = By.XPath($"{rowXpath}/td[2]");
+            By removalLinkSelector = By.XPath($"{rowXpath}/td[2]/div/a");
+            By confirmationButtonSelector = By.XPath($"//*[contains(@class,'btn_green_white_innerfade')]");
 
-            string content = $"sessionid={sessionId}&packageid={packageId}";
-            byte[] contentData = Encoding.ASCII.GetBytes(content);
-
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://store.steampowered.com/account/removelicense");
-            request.Method = "POST";
-            request.ContentLength = content.Length;
-            request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-            request.Headers.Add("Cookies", cookiesHeaderValue);
-
-            Console.WriteLine(cookiesHeaderValue);
-            Console.WriteLine(sessionId);
-            Console.WriteLine(content);
-
-            using (var stream = request.GetRequestStream())
-            {
-                stream.Write(contentData, 0, content.Length);
-            }
-
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            string responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
-
-            Console.WriteLine(responseString);
+            webProcessor.Click(removalLinkSelector);
+            webProcessor.Click(confirmationButtonSelector);
         }
 
         string GetCookieValue(string cookieName)
