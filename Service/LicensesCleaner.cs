@@ -25,8 +25,29 @@ namespace SteamFreeLicensesCleaner.Service
 
         static IEnumerable<string> patternsToRemove = new List<string>
         {
-            "^.* Demo$",
-            "^.* Beta Testing$"
+            @"^.* \(Trial\)$",
+            @"^.* 30-[Dd]ay [Tt]rial$",
+            @"^.* Beta Testing$",
+            @"^.* Demo$",
+            @"^.* Free Trial$",
+            @"^.* System Test$",
+            @"^.* Test Server - Free$",
+            @"^.* Test Server$",
+            @"^.* Trial [Ee]dition$",
+            @"^.* Trial [Vv]er\.$",
+            @"^.* Trial [Vv]ersion$",
+            @"^.* Trial [Vv]ersionⅡ$",
+
+            // Chinese, Japanese, Korean
+            @"\p{IsHangulJamo}|"+
+            @"\p{IsCJKRadicalsSupplement}|"+
+            @"\p{IsCJKSymbolsandPunctuation}|"+
+            @"\p{IsEnclosedCJKLettersandMonths}|"+
+            @"\p{IsCJKCompatibility}|"+
+            @"\p{IsCJKUnifiedIdeographsExtensionA}|"+
+            @"\p{IsCJKUnifiedIdeographs}|"+
+            @"\p{IsHangulSyllables}|"+
+            @"\p{IsCJKCompatibilityForms}"
         };
 
         public LicensesCleaner(
@@ -64,20 +85,20 @@ namespace SteamFreeLicensesCleaner.Service
         {
             logger.Info(MyOperation.LicensesCleaning, OperationStatus.Started);
 
-            int rowIndex = 2100;
+            string rowXpath = $"//*[@id='main_content']/div/div/div/div/table/tbody/tr";
 
-            while (true)
+            By rowsSelector = By.XPath(rowXpath);
+
+            int rowsCount = webProcessor.GetElements(rowsSelector).Count();
+
+            for (int rowIndex = 2000; rowIndex < rowsCount; rowIndex++)
             {
-                string rowXpath = $"//*[@id='main_content']/div/div/div/div/table/tbody/tr[{rowIndex + 2}]";
-                By rowSelector = By.XPath($"{rowXpath}/td[2]");
-                By removalLinkSelector = By.XPath($"{rowXpath}/td[2]/div/a");
+                string rowIndexXpath = $"{rowXpath}[{rowIndex + 2}]";
 
-                if (!webProcessor.DoesElementExist(rowSelector))
-                {
-                    break;
-                }
+                By productNameSelector = By.XPath($"{rowIndexXpath}/td[2]");
+                By removalLinkSelector = By.XPath($"{rowIndexXpath}/td[2]/div/a");
 
-                IWebElement element = webDriver.FindElement(rowSelector);
+                IWebElement element = webDriver.FindElement(productNameSelector);
 
                 Actions actions = new Actions(webDriver);
                 actions.MoveToElement(element);
@@ -85,13 +106,16 @@ namespace SteamFreeLicensesCleaner.Service
 
                 try
                 {
-                    string productName = GetProductName(rowIndex);
+                    string productName = ProcessProductName(webProcessor.GetText(productNameSelector));
+                    Console.WriteLine(rowIndex + " " + productName);
 
                     if (webProcessor.DoesElementExist(removalLinkSelector) &&
                         patternsToRemove.Any(pattern => Regex.IsMatch(productName, pattern)))
                     {
                         string removalScript = webProcessor.GetHyperlink(removalLinkSelector);
                         RemoveLicense(removalScript);
+
+                        rowIndex -= 1;
 
                         logger.Info(
                             MyOperation.LicensesCleaning,
@@ -103,10 +127,6 @@ namespace SteamFreeLicensesCleaner.Service
                 catch (Exception ex)
                 {
                     logger.Error(MyOperation.LicensesCleaning, OperationStatus.InProgress, ex);
-                }
-                finally
-                {
-                    rowIndex += 1;
                 }
             }
 
@@ -129,22 +149,16 @@ namespace SteamFreeLicensesCleaner.Service
             webProcessor.WaitForElementToBeVisible(licensesTableSelector);
         }
 
-        string GetProductName(int index)
-        {
-            By rowSelector = By.XPath($"//*[@id='main_content']/div/div/div/div/table/tbody/tr[{index + 2}]/td[2]");
-            string productName = webProcessor.GetText(rowSelector).Replace(Environment.NewLine, " ");
-            
-            return ProcessProductName(productName);
-        }
-
         string ProcessProductName(string productName)
         {
-            if (productName.StartsWith("Remove"))
+            string processedProductName = productName.Replace(Environment.NewLine, " ");
+
+            if (processedProductName.StartsWith("Remove"))
             {
-                productName = productName.ReplaceFirst("Remove", "");
+                processedProductName = processedProductName.ReplaceFirst("Remove", "");
             }
 
-            return productName.Trim();
+            return processedProductName.Trim();
         }
     }    
 }
