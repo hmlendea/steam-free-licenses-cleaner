@@ -131,7 +131,7 @@ namespace SteamFreeLicensesCleaner.Service
                 string cookieDomain = cookieLineFields[0];
                 string cookiePath = cookieLineFields[2];
                 string cookieName = cookieLineFields[5];
-                string cookieValue = HttpUtility.UrlEncode(cookieLineFields[6]);
+                string cookieValue = HttpUtility.UrlDecode(cookieLineFields[6]);
                 DateTime? cookieExpiry = null;
 
                 if (cookieLineFields[4] != "0")

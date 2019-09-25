@@ -47,8 +47,6 @@ namespace SteamFreeLicensesCleaner.Service
         {
             cookiesManager.LoadCookies();
 
-            logger.Info(MyOperation.LicensesCleaning, OperationStatus.Started);
-
             webProcessor.GoToUrl(LicensesUrl);
 
             By loginButtonSelector = By.Id("login_btn_signin");
@@ -58,17 +56,17 @@ namespace SteamFreeLicensesCleaner.Service
                 logger.Error(MyOperation.LicensesCleaning, "The user is not logged in");
                 return;
             }
-
+            
             RemoveLicenses();
-
-            logger.Debug(MyOperation.LicensesCleaning, OperationStatus.Success);
 
             cookiesManager.SaveCookies();
         }
 
         void RemoveLicenses()
         {
-            int rowIndex = 145;
+            logger.Info(MyOperation.LicensesCleaning, OperationStatus.Started);
+
+            int rowIndex = 0;
 
             while (true)
             {
@@ -80,43 +78,51 @@ namespace SteamFreeLicensesCleaner.Service
                 {
                     break;
                 }
-                
-                string productName = GetProductName(rowIndex);
 
-                Console.WriteLine(rowIndex + " " + productName);
-
-                if (webProcessor.DoesElementExist(removalLinkSelector) &&
-                    patternsToRemove.Any(pattern => Regex.IsMatch(productName, pattern)))
+                try
                 {
-                    RemoveLicense(rowIndex);
-                    
-                    logger.Debug(
-                        MyOperation.LicensesCleaning,
-                        OperationStatus.InProgress,
-                        new LogInfo(MyLogInfoKey.ProductName, productName));
+                    string productName = GetProductName(rowIndex);
+
+                    if (webProcessor.DoesElementExist(removalLinkSelector) &&
+                        patternsToRemove.Any(pattern => Regex.IsMatch(productName, pattern)))
+                    {
+                        string removalScript = webProcessor.GetHyperlink(removalLinkSelector);
+                        RemoveLicense(removalScript);
+
+                        logger.Info(
+                            MyOperation.LicensesCleaning,
+                            OperationStatus.InProgress,
+                            new LogInfo(MyLogInfoKey.ProductName, productName),
+                            new LogInfo(MyLogInfoKey.LincenseIndex, rowIndex));
+                    }
                 }
-                
-                rowIndex += 1;
+                catch (Exception ex)
+                {
+                    logger.Error(MyOperation.LicensesCleaning, OperationStatus.InProgress, ex);
+                }
+                finally
+                {
+                    rowIndex += 1;
+                }
             }
+
+            logger.Debug(MyOperation.LicensesCleaning, OperationStatus.Success);
         }
-        
-        void RemoveLicense(int rowIndex)
+
+        void RemoveLicense(string removalScript)
         {
-            string rowXpath = $"//*[@id='main_content']/div/div/div/div/table/tbody/tr[{rowIndex + 2}]";
-            By rowSelector = By.XPath($"{rowXpath}/td[2]");
-            By removalLinkSelector = By.XPath($"{rowXpath}/td[2]/div/a");
+            By licensesTableSelector = By.ClassName("account_table");
             By confirmationButtonSelector = By.XPath($"//*[contains(@class,'btn_green_white_innerfade')]");
 
-            webProcessor.Click(removalLinkSelector);
+            webProcessor.WaitForElementToBeVisible(licensesTableSelector);
+
+            webProcessor.ExecuteScript(removalScript);
             webProcessor.Click(confirmationButtonSelector);
-        }
+            webProcessor.WaitForElementToBeInvisible(confirmationButtonSelector);
 
-        string GetCookieValue(string cookieName)
-        {
-            string rawValue = webDriver.Manage().Cookies.AllCookies.First(x => x.Name == cookieName).Value;
-
-            return rawValue
-                .Replace("%25", "%");
+            webProcessor.GoToUrl("https://google.ro");
+            webProcessor.GoToUrl(LicensesUrl);
+            webProcessor.WaitForElementToBeVisible(licensesTableSelector);
         }
 
         string GetProductName(int index)
