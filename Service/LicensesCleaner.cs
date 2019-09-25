@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
 
 using NuciExtensions;
@@ -11,6 +8,7 @@ using NuciLog.Core;
 using NuciWeb;
 
 using OpenQA.Selenium;
+using OpenQA.Selenium.Interactions;
 
 using SteamFreeLicensesCleaner.Logging;
 
@@ -66,7 +64,7 @@ namespace SteamFreeLicensesCleaner.Service
         {
             logger.Info(MyOperation.LicensesCleaning, OperationStatus.Started);
 
-            int rowIndex = 0;
+            int rowIndex = 2100;
 
             while (true)
             {
@@ -78,6 +76,12 @@ namespace SteamFreeLicensesCleaner.Service
                 {
                     break;
                 }
+
+                IWebElement element = webDriver.FindElement(rowSelector);
+
+                Actions actions = new Actions(webDriver);
+                actions.MoveToElement(element);
+                actions.Perform();
 
                 try
                 {
