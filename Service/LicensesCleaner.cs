@@ -25,9 +25,12 @@ namespace SteamFreeLicensesCleaner.Service
 
         static IEnumerable<string> patternsToRemove = new List<string>
         {
+            @"^.* [Ss]hort [Ff]ilm .*$",
+            @"^.* \(RETIRED FREE PACKAGE\)$",
             @"^.* \(Trial\)$",
             @"^.* 30-[Dd]ay [Tt]rial$",
             @"^.* Beta Testing$",
+            @"^.* Character Creator Preview$",
             @"^.* Demo$",
             @"^.* Free Trial$",
             @"^.* System Test$",
@@ -35,8 +38,10 @@ namespace SteamFreeLicensesCleaner.Service
             @"^.* Test Server$",
             @"^.* Trial [Ee]dition$",
             @"^.* Trial [Vv]er\.$",
-            @"^.* Trial [Vv]ersion$",
-            @"^.* Trial [Vv]ersionⅡ$",
+            @"^.* Trial [Vv]ersion[Ⅱ]+$",
+            @"^.*[ _][Tt]railer.*$",
+            @"^Blade Tutorial: 3Ds Max.*$",
+            @"^Complete Figure Drawing Course.*$",
 
             // Chinese, Japanese, Korean
             @"\p{IsHangulJamo}|"+
@@ -91,13 +96,14 @@ namespace SteamFreeLicensesCleaner.Service
 
             int rowsCount = webProcessor.GetElements(rowsSelector).Count();
 
-            for (int rowIndex = 2000; rowIndex < rowsCount; rowIndex++)
+            for (int rowIndex = 4640; rowIndex < rowsCount; rowIndex++)
             {
                 string rowIndexXpath = $"{rowXpath}[{rowIndex + 2}]";
 
                 By productNameSelector = By.XPath($"{rowIndexXpath}/td[2]");
                 By removalLinkSelector = By.XPath($"{rowIndexXpath}/td[2]/div/a");
 
+                webProcessor.WaitForElementToExist(productNameSelector);
                 IWebElement element = webDriver.FindElement(productNameSelector);
 
                 Actions actions = new Actions(webDriver);
@@ -142,10 +148,9 @@ namespace SteamFreeLicensesCleaner.Service
 
             webProcessor.ExecuteScript(removalScript);
             webProcessor.Click(confirmationButtonSelector);
-            webProcessor.WaitForElementToBeInvisible(confirmationButtonSelector);
 
-            webProcessor.GoToUrl("https://google.ro");
-            webProcessor.GoToUrl(LicensesUrl);
+            webProcessor.Refresh();
+            webProcessor.WaitForElementToBeInvisible(confirmationButtonSelector);
             webProcessor.WaitForElementToBeVisible(licensesTableSelector);
         }
 
