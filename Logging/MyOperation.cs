@@ -14,6 +14,8 @@ namespace SteamFreeLicensesCleaner.Logging
 
         public static Operation CookiesSaving => new MyOperation(nameof(CookiesSaving));
 
+        public static Operation LicensesLoading => new MyOperation(nameof(LicensesLoading));
+
         public static Operation LicensesCleaning => new MyOperation(nameof(LicensesCleaning));
     }
 }

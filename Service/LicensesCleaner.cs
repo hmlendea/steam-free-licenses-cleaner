@@ -25,21 +25,24 @@ namespace SteamFreeLicensesCleaner.Service
 
         static IEnumerable<string> patternsToRemove = new List<string>
         {
-            @"^.* [Ss]hort [Ff]ilm .*$",
+            @"^.* - [Ff]ree$",
+            @"^.* ([Ff]ree-[Tt]o-[Pp]lay|[Ff]ree [Tt]o [Pp]lay|[Ff]ree 2 [Pp]lay|[Ff]2[Pp])$",
+            @"^.* ([Tt]est|[Dd]edicated) [Ss]erver .*$",
+            @"^.* ([Tt]rial|[Dd]emo|[Ff]ree|[Ff]ree [Pp]lay) ([Ee]dition|[Vv]ersion|[Vv]er[\.]+).*$",
+            @"^.* (PEGI|ESRB|USK|BBFC|CTC|Unrated).*$",
+            @"^.* [Ss]hort [Ff]ilm.*$",
+            @"^.* \(([Tt]rial|[Dd]emo)\)$",
             @"^.* \(RETIRED FREE PACKAGE\)$",
-            @"^.* \(Trial\)$",
             @"^.* 30-[Dd]ay [Tt]rial$",
             @"^.* Beta Testing$",
             @"^.* Character Creator Preview$",
             @"^.* Demo$",
+            @"^.* Free to Play$",
             @"^.* Free Trial$",
             @"^.* System Test$",
-            @"^.* Test Server - Free$",
-            @"^.* Test Server$",
-            @"^.* Trial [Ee]dition$",
-            @"^.* Trial [Vv]er\.$",
-            @"^.* Trial [Vv]ersion[Ⅱ]+$",
-            @"^.*[ _][Tt]railer.*$",
+            @"^.*[ _]([Tt]railer|[Tt]easer).*$",
+            @"^.*[Tt]ech [Vv]ideo.*$",
+            @"^.*[Vv]ideo [Cc]ommentary.*$",
             @"^Blade Tutorial: 3Ds Max.*$",
             @"^Complete Figure Drawing Course.*$",
 
@@ -70,33 +73,56 @@ namespace SteamFreeLicensesCleaner.Service
         public void CleanLicenses()
         {
             cookiesManager.LoadCookies();
-
-            webProcessor.GoToUrl(LicensesUrl);
-
-            By loginButtonSelector = By.Id("login_btn_signin");
-
-            if (webProcessor.DoesElementExist(loginButtonSelector))
-            {
-                logger.Error(MyOperation.LicensesCleaning, "The user is not logged in");
-                return;
-            }
             
+            LoadLicenses();
             RemoveLicenses();
 
             cookiesManager.SaveCookies();
         }
 
+        void LoadLicenses()
+        {
+            By rowsSelector = By.XPath(@"//*[@id='main_content']/div/div/div/div/table/tbody/tr");
+            By loginButtonSelector = By.Id("login_btn_signin");
+
+            logger.Info(MyOperation.LicensesLoading, OperationStatus.Started);
+
+            webProcessor.GoToUrl(LicensesUrl);
+
+            if (webProcessor.DoesElementExist(loginButtonSelector))
+            {
+                logger.Error(MyOperation.LicensesLoading, "The user is not logged in");
+                return;
+            }
+
+            int rowsCount = webProcessor.GetElements(rowsSelector).Count();
+
+            while(webProcessor.GetElements(rowsSelector).Count() != rowsCount)
+            {
+                webProcessor.Wait(1000);
+                rowsCount = webProcessor.GetElements(rowsSelector).Count();
+            }
+
+            logger.Info(
+                MyOperation.LicensesLoading,
+                OperationStatus.Success,
+                new LogInfo(MyLogInfoKey.LicensesCount, rowsCount));
+        }
+
         void RemoveLicenses()
         {
-            logger.Info(MyOperation.LicensesCleaning, OperationStatus.Started);
-
             string rowXpath = $"//*[@id='main_content']/div/div/div/div/table/tbody/tr";
 
             By rowsSelector = By.XPath(rowXpath);
 
             int rowsCount = webProcessor.GetElements(rowsSelector).Count();
 
-            for (int rowIndex = 4640; rowIndex < rowsCount; rowIndex++)
+            logger.Info(
+                MyOperation.LicensesCleaning,
+                OperationStatus.Started,
+                new LogInfo(MyLogInfoKey.LicensesCount, rowsCount));
+
+            for (int rowIndex = 1090; rowIndex < rowsCount; rowIndex++)
             {
                 string rowIndexXpath = $"{rowXpath}[{rowIndex + 2}]";
 
@@ -113,7 +139,6 @@ namespace SteamFreeLicensesCleaner.Service
                 try
                 {
                     string productName = ProcessProductName(webProcessor.GetText(productNameSelector));
-                    Console.WriteLine(rowIndex + " " + productName);
 
                     if (webProcessor.DoesElementExist(removalLinkSelector) &&
                         patternsToRemove.Any(pattern => Regex.IsMatch(productName, pattern)))
@@ -151,6 +176,7 @@ namespace SteamFreeLicensesCleaner.Service
 
             webProcessor.Refresh();
             webProcessor.WaitForElementToBeInvisible(confirmationButtonSelector);
+            webProcessor.WaitForElementToBeInvisible(licensesTableSelector);
             webProcessor.WaitForElementToBeVisible(licensesTableSelector);
         }
 

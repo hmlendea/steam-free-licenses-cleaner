@@ -13,5 +13,7 @@ namespace SteamFreeLicensesCleaner.Logging
         public static LogInfoKey ProductName => new MyLogInfoKey(nameof(ProductName));
 
         public static LogInfoKey LincenseIndex => new MyLogInfoKey(nameof(LincenseIndex));
+
+        public static LogInfoKey LicensesCount => new MyLogInfoKey(nameof(LicensesCount));
     }
 }
