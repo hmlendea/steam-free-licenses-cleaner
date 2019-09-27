@@ -25,24 +25,24 @@ namespace SteamFreeLicensesCleaner.Service
 
         static IEnumerable<string> patternsToRemove = new List<string>
         {
-            @"^.* - [Ff]ree$",
-            @"^.* ([Ff]ree-[Tt]o-[Pp]lay|[Ff]ree [Tt]o [Pp]lay|[Ff]ree 2 [Pp]lay|[Ff]2[Pp])$",
-            @"^.* ([Tt]est|[Dd]edicated) [Ss]erver .*$",
-            @"^.* ([Tt]rial|[Dd]emo|[Ff]ree|[Ff]ree [Pp]lay) ([Ee]dition|[Vv]ersion|[Vv]er[\.]+).*$",
+            @"^.* - Free$",
+            @"^.* (Free-To-Play|Free To Play|Free 2 Play|F2P)$",
             @"^.* (PEGI|ESRB|USK|BBFC|CTC|Unrated).*$",
-            @"^.* [Ss]hort [Ff]ilm.*$",
-            @"^.* \(([Tt]rial|[Dd]emo)\)$",
+            @"^.* (Test|Dedicated) Server .*$",
+            @"^.* (Trial|Demo|Free|Free Play) (Edition|Version|Ver[\.]+).*$",
+            @"^.* Demo$",
+            @"^.* \((Trial|Demo)\)$",
             @"^.* \(RETIRED FREE PACKAGE\)$",
-            @"^.* 30-[Dd]ay [Tt]rial$",
+            @"^.* 30-Day Trial$",
             @"^.* Beta Testing$",
             @"^.* Character Creator Preview$",
-            @"^.* Demo$",
             @"^.* Free to Play$",
             @"^.* Free Trial$",
+            @"^.* Short Film.*$",
             @"^.* System Test$",
-            @"^.*[ _]([Tt]railer|[Tt]easer).*$",
-            @"^.*[Tt]ech [Vv]ideo.*$",
-            @"^.*[Vv]ideo [Cc]ommentary.*$",
+            @"^.*[ _](Trailer|Teaser).*$",
+            @"^.*Tech Video.*$",
+            @"^.*Video Commentary.*$",
             @"^Blade Tutorial: 3Ds Max.*$",
             @"^Complete Figure Drawing Course.*$",
 
@@ -115,14 +115,14 @@ namespace SteamFreeLicensesCleaner.Service
 
             By rowsSelector = By.XPath(rowXpath);
 
-            int rowsCount = webProcessor.GetElements(rowsSelector).Count();
+            int rowsCount = webProcessor.GetElements(rowsSelector).Count() - 2;
 
             logger.Info(
                 MyOperation.LicensesCleaning,
                 OperationStatus.Started,
                 new LogInfo(MyLogInfoKey.LicensesCount, rowsCount));
 
-            for (int rowIndex = 1090; rowIndex < rowsCount; rowIndex++)
+            for (int rowIndex = 0; rowIndex < rowsCount; rowIndex++)
             {
                 string rowIndexXpath = $"{rowXpath}[{rowIndex + 2}]";
 
@@ -141,7 +141,7 @@ namespace SteamFreeLicensesCleaner.Service
                     string productName = ProcessProductName(webProcessor.GetText(productNameSelector));
 
                     if (webProcessor.DoesElementExist(removalLinkSelector) &&
-                        patternsToRemove.Any(pattern => Regex.IsMatch(productName, pattern)))
+                        patternsToRemove.Any(pattern => Regex.IsMatch(productName, pattern, RegexOptions.IgnoreCase)))
                     {
                         string removalScript = webProcessor.GetHyperlink(removalLinkSelector);
                         RemoveLicense(removalScript);
