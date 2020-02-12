@@ -30,8 +30,7 @@ namespace SteamFreeLicensesCleaner.Service
             @"^.* (PEGI|ESRB|USK|BBFC|CTC|Unrated).*$",
             @"^.* (Test|Dedicated) Server .*$",
             @"^.* (Trial|Demo|Free|Free Play) (Edition|Version|Ver[\.]+).*$",
-            @"^.* Demo$",
-            @"^.* \((Trial|Demo)\)$",
+            @"^.* \((Trial|Demo|Demo Free|Demo Old|Demo \(Old\)|Demo [0-9].*)\)$",
             @"^.* \(RETIRED FREE PACKAGE\)$",
             @"^.* 30-Day Trial$",
             @"^.* Beta Testing$",
@@ -40,6 +39,7 @@ namespace SteamFreeLicensesCleaner.Service
             @"^.* Free Trial$",
             @"^.* Short Film.*$",
             @"^.* System Test$",
+            @"^.*[ _](Demo|Demo [0-9].*)$",
             @"^.*[ _](Trailer|Teaser).*$",
             @"^.*Tech Video.*$",
             @"^.*Video Commentary.*$",
@@ -99,7 +99,7 @@ namespace SteamFreeLicensesCleaner.Service
 
             while(webProcessor.GetElements(rowsSelector).Count() != rowsCount)
             {
-                webProcessor.Wait(1000);
+                webProcessor.Wait(1500);
                 rowsCount = webProcessor.GetElements(rowsSelector).Count();
             }
 
